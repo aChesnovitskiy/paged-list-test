@@ -1,6 +1,5 @@
 package com.achesnovitskiy.pagedlisttest.ui.cats
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,16 +10,9 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.achesnovitskiy.pagedlisttest.R
 import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
-import com.squareup.picasso.Callback
-import com.squareup.picasso.OkHttp3Downloader
 import com.squareup.picasso.Picasso
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_cat.view.*
-import okhttp3.OkHttpClient
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
-import javax.net.ssl.*
-
 
 class CatsAdapter : ListAdapter<PresentationCat, CatViewHolder>(
     CatsDiffCallback()
@@ -63,20 +55,9 @@ class CatViewHolder(override val containerView: View) : RecyclerView.ViewHolder(
             .load(cat.image_url)
             .placeholder(R.drawable.ic_time_black_48)
             .error(R.drawable.ic_broken_image_black_48)
-            .fit()
-            .into(
-                itemCatImageView,
-                object : Callback {
-
-                    override fun onSuccess() {
-
-                    }
-
-                    override fun onError(e: Exception?) {
-                        Log.e("My", "${e}")
-                    }
-                }
-            )
+            .resize(200, 200)
+            .centerCrop()
+            .into(itemCatImageView)
 
         itemCatIdTextView.text = cat.id
     }

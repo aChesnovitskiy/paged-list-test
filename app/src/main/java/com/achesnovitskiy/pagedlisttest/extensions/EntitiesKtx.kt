@@ -6,7 +6,7 @@ import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
 
 fun Cat.toDomainCat(): DomainCat = DomainCat(
     id = this.id,
-    image_url = this.image_url
+    image_url = this.image.image_url
 )
 
 fun DomainCat.toPresentationCat(): PresentationCat = PresentationCat(

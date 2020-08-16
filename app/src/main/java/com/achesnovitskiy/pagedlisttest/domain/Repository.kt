@@ -20,7 +20,7 @@ class RepositoryImpl @Inject constructor(
 ) : Repository {
 
     override val catObservable: Observable<List<DomainCat>>
-        get() = api.getCats()
+        get() = api.getCats(0)
             .map { dataCats ->
                 dataCats.map { dataCat ->
                     dataCat.toDomainCat()
