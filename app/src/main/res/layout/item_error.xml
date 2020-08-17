@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/colorError"
     android:orientation="horizontal"
     android:padding="@dimen/spacing_small_8"
     tools:ignore="UseCompoundDrawables">
@@ -14,6 +13,7 @@
         android:layout_width="@dimen/item_icon_size_48"
         android:layout_height="@dimen/item_icon_size_48"
         app:srcCompat="@drawable/ic_error_black_48"
+        app:tint="@color/colorError"
         tools:ignore="ContentDescription" />
 
     <TextView
@@ -24,7 +24,7 @@
         android:layout_marginStart="@dimen/spacing_small_8"
         android:layout_marginLeft="@dimen/spacing_small_8"
         android:text="@string/loading_error_check_your_internet_connection"
-        android:textColor="@android:color/black"
+        android:textColor="@color/colorError"
         android:textSize="@dimen/font_size_normal_14" />
 
 </LinearLayout>
