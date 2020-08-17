@@ -14,23 +14,61 @@ import com.squareup.picasso.Picasso
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_cat.view.*
 
-class CatsAdapter : ListAdapter<PresentationCat, CatViewHolder>(
+class CatsAdapter : ListAdapter<PresentationCat, RecyclerView.ViewHolder>(
     CatsDiffCallback()
 ) {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CatViewHolder =
-        CatViewHolder(
-            LayoutInflater
-                .from(parent.context)
-                .inflate(
-                    R.layout.item_cat,
-                    parent,
-                    false
-                )
-        )
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
+        when (viewType) {
+            TYPE_CAT -> CatViewHolder(
+                LayoutInflater
+                    .from(parent.context)
+                    .inflate(
+                        R.layout.item_cat,
+                        parent,
+                        false
+                    )
+            )
 
-    override fun onBindViewHolder(holder: CatViewHolder, position: Int) {
-        holder.bind(getItem(position))
+            TYPE_LOADER -> EmptyViewHolder(
+                LayoutInflater
+                    .from(parent.context)
+                    .inflate(
+                        R.layout.item_loader,
+                        parent,
+                        false
+                    )
+            )
+
+            else -> EmptyViewHolder(
+                LayoutInflater
+                    .from(parent.context)
+                    .inflate(
+                        R.layout.item_error,
+                        parent,
+                        false
+                    )
+            )
+        }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        if (holder is CatViewHolder) {
+            holder.bind(getItem(position))
+        }
+    }
+
+    override fun getItemViewType(position: Int): Int =
+        when {
+            getItem(position).isLoader -> TYPE_LOADER
+            getItem(position).isError -> TYPE_ERROR
+            else -> TYPE_CAT
+        }
+
+
+    companion object {
+        const val TYPE_CAT = 1
+        const val TYPE_LOADER = 2
+        const val TYPE_ERROR = 3
     }
 }
 
@@ -62,3 +100,5 @@ class CatViewHolder(override val containerView: View) : RecyclerView.ViewHolder(
         itemCatIdTextView.text = cat.id
     }
 }
+
+class EmptyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
