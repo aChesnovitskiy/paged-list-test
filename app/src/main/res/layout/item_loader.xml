@@ -17,7 +17,7 @@
         android:layout_marginStart="@dimen/spacing_small_8"
         android:layout_marginLeft="@dimen/spacing_small_8"
         android:layout_gravity="center_vertical"
-        android:text="@string/loading_cats"
+        android:text="@string/msg_loading_cats"
         android:textColor="@android:color/black"
         android:textSize="@dimen/font_size_normal_14" />
 

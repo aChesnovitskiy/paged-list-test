@@ -23,7 +23,7 @@
         android:layout_gravity="center_vertical"
         android:layout_marginStart="@dimen/spacing_small_8"
         android:layout_marginLeft="@dimen/spacing_small_8"
-        android:text="@string/loading_error_check_your_internet_connection"
+        android:text="@string/msg_loading_error"
         android:textColor="@color/colorError"
         android:textSize="@dimen/font_size_normal_14" />
 

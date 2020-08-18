@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.achesnovitskiy.pagedlisttest.R
 import com.achesnovitskiy.pagedlisttest.app.App.Companion.appComponent
+import com.achesnovitskiy.pagedlisttest.extensions.showSnackbarWithAction
 import com.achesnovitskiy.pagedlisttest.ui.base.BaseFragment
 import com.achesnovitskiy.pagedlisttest.ui.cats.di.CatsModule
 import com.achesnovitskiy.pagedlisttest.ui.cats.di.DaggerCatsComponent
@@ -17,7 +18,6 @@ import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_cats.*
 import javax.inject.Inject
 
-@ExperimentalStdlibApi
 class CatsFragment : BaseFragment(R.layout.fragment_cats) {
 
     @Inject
@@ -58,6 +58,7 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
         }
     }
 
+    @ExperimentalStdlibApi
     override fun onResume() {
         super.onResume()
 
@@ -88,6 +89,23 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                     {
                         // TODO
                     }
+                ),
+
+            catsViewModel.refreshErrorObservable
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    {
+                        this.showSnackbarWithAction(
+                            message = getString(R.string.msg_refresh_error),
+                            actionText = getString(R.string.action_repeat)
+                        ) {
+                            catsViewModel.refreshObserver.onNext(Unit)
+                        }
+                    },
+                    {
+                        // TODO
+                    }
                 )
         )
     }
@@ -110,6 +128,7 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
         }
     }
 
+    @ExperimentalStdlibApi
     private fun hideLoader() {
         if (catsAdapter.currentList.last().isLoader) {
             val list: MutableList<PresentationCat> = mutableListOf()

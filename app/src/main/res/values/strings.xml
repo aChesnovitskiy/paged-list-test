@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Paged List Test</string>
-    <string name="loading_cats">Loading cats</string>
-    <string name="loading_error_check_your_internet_connection">Loading error. Check your internet connection</string>
+    <string name="msg_loading_cats">Loading cats</string>
+    <string name="msg_loading_error">Loading error. Check your internet connection</string>
+    <string name="msg_refresh_error">Refresh error. Check your internet connection</string>
+    <string name="action_repeat">Repeat</string>
 </resources>

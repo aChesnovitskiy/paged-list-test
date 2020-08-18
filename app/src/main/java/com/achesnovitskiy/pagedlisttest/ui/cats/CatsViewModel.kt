@@ -20,7 +20,11 @@ interface CatsViewModel {
 
     val isLoadingObservable: Observable<Boolean>
 
+    val refreshErrorObservable: Observable<Unit>
+
     val refreshObserver: Observer<Unit>
+
+    val loadNextPageObserver: Observer<Unit>
 }
 
 class CatsViewModelImpl @Inject constructor(private val repository: Repository) : ViewModel(),
@@ -35,10 +39,15 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
                     domainCat.toPresentationCat()
                 }
             }
+
     override val isLoadingObservable: BehaviorSubject<Boolean> =
         BehaviorSubject.createDefault(false)
 
+    override val refreshErrorObservable: BehaviorSubject<Unit> = BehaviorSubject.create()
+
     override val refreshObserver: PublishSubject<Unit> = PublishSubject.create()
+
+    override val loadNextPageObserver: PublishSubject<Unit> = PublishSubject.create()
 
     init {
         disposable = CompositeDisposable(
@@ -52,14 +61,14 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
                             .subscribeOn(Schedulers.io())
                             .subscribe(
                                 {
-//                                    isLoadingObservable.onNext(false)
+                                    isLoadingObservable.onNext(false)
                                 },
                                 {
-//                                    isLoadingObservable.onNext(false)
-                                    // TODO
+                                    isLoadingObservable.onNext(false)
+
+                                    refreshErrorObservable.onNext(Unit)
                                 }
                             )
-
                     )
                 }
         )
