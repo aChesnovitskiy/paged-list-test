@@ -6,12 +6,19 @@ import com.achesnovitskiy.pagedlisttest.extensions.toPresentationCat
 import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
 import io.reactivex.Observable
 import io.reactivex.Observer
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
+import io.reactivex.disposables.Disposables
+import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
 
 interface CatsViewModel {
 
-    val catObservable: Observable<List<PresentationCat>>
+    val catsObservable: Observable<List<PresentationCat>>
+
+    val isLoadingObservable: Observable<Boolean>
 
     val refreshObserver: Observer<Unit>
 }
@@ -19,17 +26,48 @@ interface CatsViewModel {
 class CatsViewModelImpl @Inject constructor(private val repository: Repository) : ViewModel(),
     CatsViewModel {
 
-    override val catObservable: Observable<List<PresentationCat>>
+    private var disposable: Disposable = Disposables.disposed()
+
+    override val catsObservable: Observable<List<PresentationCat>>
         get() = repository.catObservable
             .map { domainCats ->
                 domainCats.map { domainCat ->
                     domainCat.toPresentationCat()
                 }
             }
+    override val isLoadingObservable: BehaviorSubject<Boolean> =
+        BehaviorSubject.createDefault(false)
 
     override val refreshObserver: PublishSubject<Unit> = PublishSubject.create()
 
     init {
-//        repository.refreshCats()
+        disposable = CompositeDisposable(
+            refreshObserver
+                .subscribe
+                {
+                    isLoadingObservable.onNext(true)
+
+                    (disposable as CompositeDisposable).add(
+                        repository.refresh()
+                            .subscribeOn(Schedulers.io())
+                            .subscribe(
+                                {
+//                                    isLoadingObservable.onNext(false)
+                                },
+                                {
+//                                    isLoadingObservable.onNext(false)
+                                    // TODO
+                                }
+                            )
+
+                    )
+                }
+        )
+
+        refreshObserver.onNext(Unit)
+    }
+
+    override fun onCleared() {
+        disposable.dispose()
     }
 }

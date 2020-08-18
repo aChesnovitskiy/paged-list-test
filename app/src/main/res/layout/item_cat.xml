@@ -4,13 +4,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="@dimen/spacing_small_8">
+    android:padding="@dimen/spacing_small_8"
+    tools:ignore="UseCompoundDrawables">
 
     <ImageView
         android:id="@+id/itemCatImageView"
         android:layout_width="@dimen/item_icon_size_48"
         android:layout_height="@dimen/item_icon_size_48"
-        tools:srcCompat="@drawable/ic_time_black_48"
+        tools:srcCompat="@drawable/ic_error_black_48"
         tools:ignore="ContentDescription" />
 
     <TextView

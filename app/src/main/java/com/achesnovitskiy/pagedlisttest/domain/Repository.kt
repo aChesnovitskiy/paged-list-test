@@ -11,7 +11,7 @@ import javax.inject.Inject
 interface Repository {
     val catObservable: Observable<List<DomainCat>>
 
-    fun refreshCats(): Completable
+    fun refresh(): Completable
 }
 
 class RepositoryImpl @Inject constructor(
@@ -20,26 +20,19 @@ class RepositoryImpl @Inject constructor(
 ) : Repository {
 
     override val catObservable: Observable<List<DomainCat>>
-        get() = api.getCats(0)
+        get() = db.catsDao.getCats()
             .map { dataCats ->
                 dataCats.map { dataCat ->
                     dataCat.toDomainCat()
                 }
             }
-//        get() = db.catsDao.getCats()
-//            .map { dataCats ->
-//                dataCats.map { dataCat ->
-//                    dataCat.toDomainCat()
-//                }
-//            }
 
-    override fun refreshCats(): Completable = Completable.complete()
-//        api.getCats()
-//        .doOnSuccess { cats ->
-//            db.runInTransaction {
-//                db.catsDao.clearCats()
-//                db.catsDao.insertCats(cats)
-//            }
-//        }
-//        .ignoreElement()
+    override fun refresh(): Completable = api.getCats(0)
+        .doOnNext { cats ->
+            db.runInTransaction {
+                db.catsDao.clearCats()
+                db.catsDao.insertCats(cats)
+            }
+        }
+        .ignoreElements()
 }

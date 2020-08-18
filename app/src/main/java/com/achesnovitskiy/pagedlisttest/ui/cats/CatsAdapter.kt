@@ -30,7 +30,7 @@ class CatsAdapter : ListAdapter<PresentationCat, RecyclerView.ViewHolder>(
                     )
             )
 
-            TYPE_LOADER -> EmptyViewHolder(
+            TYPE_LOADER -> ServiceViewHolder(
                 LayoutInflater
                     .from(parent.context)
                     .inflate(
@@ -40,7 +40,7 @@ class CatsAdapter : ListAdapter<PresentationCat, RecyclerView.ViewHolder>(
                     )
             )
 
-            else -> EmptyViewHolder(
+            else -> ServiceViewHolder(
                 LayoutInflater
                     .from(parent.context)
                     .inflate(
@@ -63,7 +63,6 @@ class CatsAdapter : ListAdapter<PresentationCat, RecyclerView.ViewHolder>(
             getItem(position).isError -> TYPE_ERROR
             else -> TYPE_CAT
         }
-
 
     companion object {
         const val TYPE_CAT = 1
@@ -91,7 +90,6 @@ class CatViewHolder(override val containerView: View) : RecyclerView.ViewHolder(
     fun bind(cat: PresentationCat) {
         Picasso.get()
             .load(cat.image_url)
-            .placeholder(R.drawable.ic_time_black_48)
             .error(R.drawable.ic_broken_image_black_48)
             .resize(200, 200)
             .centerCrop()
@@ -101,4 +99,4 @@ class CatViewHolder(override val containerView: View) : RecyclerView.ViewHolder(
     }
 }
 
-class EmptyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+class ServiceViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
