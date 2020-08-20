@@ -12,6 +12,8 @@ interface Repository {
     val catObservable: Observable<List<DomainCat>>
 
     fun refresh(): Completable
+
+    fun loadNextPage(page: Int): Completable
 }
 
 class RepositoryImpl @Inject constructor(
@@ -33,6 +35,12 @@ class RepositoryImpl @Inject constructor(
                 db.catsDao.clearCats()
                 db.catsDao.insertCats(cats)
             }
+        }
+        .ignoreElements()
+
+    override fun loadNextPage(page: Int): Completable = api.getCats(page)
+        .doOnNext { cats ->
+            db.catsDao.insertCats(cats)
         }
         .ignoreElements()
 }

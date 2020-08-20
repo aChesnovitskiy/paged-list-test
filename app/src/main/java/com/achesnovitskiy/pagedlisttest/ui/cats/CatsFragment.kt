@@ -2,6 +2,7 @@ package com.achesnovitskiy.pagedlisttest.ui.cats
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -80,6 +81,7 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { isLoading ->
+                        Log.d("My_", "Loading: $isLoading")
                         if (isLoading) {
                             showLoader()
                         } else {
@@ -125,6 +127,8 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
             )
 
             catsAdapter.submitList(list)
+
+            Log.d("My_", "Show loader")
         }
     }
 
@@ -138,6 +142,8 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
             list.removeLast()
 
             catsAdapter.submitList(list)
+
+            Log.d("My_", "Hide loader")
         }
     }
 }

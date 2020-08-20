@@ -12,7 +12,7 @@ fun Fragment.showSnackbarWithAction(
     Snackbar.make(
         this.requireView(),
         message,
-        Snackbar.LENGTH_SHORT
+        Snackbar.LENGTH_LONG
     )
         .setAction(actionText, action)
         .show()
