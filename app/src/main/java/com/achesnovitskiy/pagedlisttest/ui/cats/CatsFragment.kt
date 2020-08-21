@@ -76,7 +76,7 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                     }
                 ),
 
-            catsViewModel.isLoadingObservable
+            catsViewModel.isRefreshingObservable
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(

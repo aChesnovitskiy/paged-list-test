@@ -18,7 +18,7 @@ interface CatsViewModel {
 
     val catsObservable: Observable<List<PresentationCat>>
 
-    val isLoadingObservable: Observable<Boolean>
+    val isRefreshingObservable: Observable<Boolean>
 
     val refreshErrorObservable: Observable<Unit>
 
@@ -40,8 +40,7 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
                 }
             }
 
-    override val isLoadingObservable: PublishSubject<Boolean> =
-        PublishSubject.create()
+    override val isRefreshingObservable: PublishSubject<Boolean> = PublishSubject.create()
 
     override val refreshErrorObservable: BehaviorSubject<Unit> = BehaviorSubject.create()
 
@@ -53,17 +52,17 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
         disposable = CompositeDisposable(
             refreshObserver
                 .subscribe {
-                    isLoadingObservable.onNext(true)
+                    isRefreshingObservable.onNext(true)
 
                     (disposable as CompositeDisposable).add(
                         repository.refresh()
                             .subscribeOn(Schedulers.io())
                             .subscribe(
                                 {
-                                    isLoadingObservable.onNext(false)
+                                    isRefreshingObservable.onNext(false)
                                 },
                                 {
-                                    isLoadingObservable.onNext(false)
+                                    isRefreshingObservable.onNext(false)
 
                                     refreshErrorObservable.onNext(Unit)
                                 }
@@ -73,17 +72,17 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
 
             loadNextPageObserver
                 .subscribe {
-                    isLoadingObservable.onNext(true)
+                    isRefreshingObservable.onNext(true)
 
                     (disposable as CompositeDisposable).add(
-                        repository.loadNextPage(1)
+                        repository.loadNextPage()
                             .subscribeOn(Schedulers.io())
                             .subscribe(
                                 {
-                                    isLoadingObservable.onNext(false)
+                                    isRefreshingObservable.onNext(false)
                                 },
                                 {
-                                    isLoadingObservable.onNext(false)
+                                    isRefreshingObservable.onNext(false)
                                 }
                             )
                     )

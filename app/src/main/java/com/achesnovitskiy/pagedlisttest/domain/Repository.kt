@@ -11,9 +11,11 @@ import javax.inject.Inject
 interface Repository {
     val catObservable: Observable<List<DomainCat>>
 
+    var isHasNextPage: Boolean
+
     fun refresh(): Completable
 
-    fun loadNextPage(page: Int): Completable
+    fun loadNextPage(): Completable
 }
 
 class RepositoryImpl @Inject constructor(
@@ -29,18 +31,38 @@ class RepositoryImpl @Inject constructor(
                 }
             }
 
-    override fun refresh(): Completable = api.getCats(0)
-        .doOnNext { cats ->
-            db.runInTransaction {
-                db.catsDao.clearCats()
-                db.catsDao.insertCats(cats)
-            }
-        }
-        .ignoreElements()
+    override var isHasNextPage: Boolean = true
 
-    override fun loadNextPage(page: Int): Completable = api.getCats(page)
-        .doOnNext { cats ->
-            db.catsDao.insertCats(cats)
-        }
-        .ignoreElements()
+    private var nextPage: Int = 1
+
+    override fun refresh(): Completable =
+        api.getCats(0, CATS_ON_PAGE_LIMIT)
+            .doOnNext { response ->
+                db.runInTransaction {
+                    db.catsDao.clearCats()
+                    db.catsDao.insertCats(response.body() ?: emptyList())
+                }
+
+                nextPage = 1
+
+                isHasNextPage = (response.headers().get("pagination-count")?.toInt()
+                    ?: 0 - nextPage * CATS_ON_PAGE_LIMIT) > 0
+            }
+            .ignoreElements()
+
+    override fun loadNextPage(): Completable =
+        api.getCats(nextPage, CATS_ON_PAGE_LIMIT)
+            .doOnNext { response ->
+                db.catsDao.insertCats(response.body() ?: emptyList())
+
+                nextPage++
+
+                isHasNextPage = (response.headers().get("pagination-count")?.toInt()
+                    ?: 0 - nextPage * CATS_ON_PAGE_LIMIT) > 0
+            }
+            .ignoreElements()
+
+    companion object {
+        const val CATS_ON_PAGE_LIMIT = 5
+    }
 }
