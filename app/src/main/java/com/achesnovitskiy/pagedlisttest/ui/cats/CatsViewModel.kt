@@ -10,7 +10,6 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.disposables.Disposables
 import io.reactivex.schedulers.Schedulers
-import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
 
@@ -42,7 +41,7 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
 
     override val isRefreshingObservable: PublishSubject<Boolean> = PublishSubject.create()
 
-    override val refreshErrorObservable: BehaviorSubject<Unit> = BehaviorSubject.create()
+    override val refreshErrorObservable: PublishSubject<Unit> = PublishSubject.create()
 
     override val refreshObserver: PublishSubject<Unit> = PublishSubject.create()
 
