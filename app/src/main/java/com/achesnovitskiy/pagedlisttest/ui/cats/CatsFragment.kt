@@ -2,7 +2,6 @@ package com.achesnovitskiy.pagedlisttest.ui.cats
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,7 +23,9 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
     lateinit var catsViewModel: CatsViewModel
 
     private val catsAdapter: CatsAdapter by lazy(LazyThreadSafetyMode.NONE) {
-        CatsAdapter()
+        CatsAdapter {
+            catsViewModel.loadNextPageObserver.onNext(Unit)
+        }
     }
 
     override fun onAttach(context: Context) {
@@ -56,8 +57,6 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
 
             catsSwipeRefreshLayout.isRefreshing = false
         }
-
-        catsViewModel.refreshObserver.onNext(Unit)
     }
 
     override fun onResume() {
@@ -76,12 +75,11 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                     }
                 ),
 
-            catsViewModel.isRefreshingObservable
+            catsViewModel.isLoadingObservable
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { isRefreshing ->
-                        Log.d("My_", "Loading: $isRefreshing")
                         if (isRefreshing) {
                             catsAdapter.showLoader()
                         } else {

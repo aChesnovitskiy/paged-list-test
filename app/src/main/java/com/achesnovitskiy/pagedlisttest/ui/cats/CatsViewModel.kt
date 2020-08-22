@@ -17,7 +17,7 @@ interface CatsViewModel {
 
     val catsObservable: Observable<List<PresentationCat>>
 
-    val isRefreshingObservable: Observable<Boolean>
+    val isLoadingObservable: Observable<Boolean>
 
     val refreshErrorObservable: Observable<Unit>
 
@@ -29,8 +29,6 @@ interface CatsViewModel {
 class CatsViewModelImpl @Inject constructor(private val repository: Repository) : ViewModel(),
     CatsViewModel {
 
-    private var disposable: Disposable = Disposables.disposed()
-
     override val catsObservable: Observable<List<PresentationCat>>
         get() = repository.catObservable
             .map { domainCats ->
@@ -39,7 +37,7 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
                 }
             }
 
-    override val isRefreshingObservable: PublishSubject<Boolean> = PublishSubject.create()
+    override val isLoadingObservable: PublishSubject<Boolean> = PublishSubject.create()
 
     override val refreshErrorObservable: PublishSubject<Unit> = PublishSubject.create()
 
@@ -47,21 +45,23 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
 
     override val loadNextPageObserver: PublishSubject<Unit> = PublishSubject.create()
 
+    private var disposable: Disposable = Disposables.disposed()
+
     init {
         disposable = CompositeDisposable(
             refreshObserver
                 .subscribe {
-                    isRefreshingObservable.onNext(true)
+                    isLoadingObservable.onNext(true)
 
                     (disposable as CompositeDisposable).add(
                         repository.refresh()
                             .subscribeOn(Schedulers.io())
                             .subscribe(
                                 {
-                                    isRefreshingObservable.onNext(false)
+                                    isLoadingObservable.onNext(false)
                                 },
                                 {
-                                    isRefreshingObservable.onNext(false)
+                                    isLoadingObservable.onNext(false)
 
                                     refreshErrorObservable.onNext(Unit)
                                 }
@@ -71,20 +71,22 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
 
             loadNextPageObserver
                 .subscribe {
-                    isRefreshingObservable.onNext(true)
+                    if (repository.hasNextPage) {
+                        isLoadingObservable.onNext(true)
 
-                    (disposable as CompositeDisposable).add(
-                        repository.loadNextPage()
-                            .subscribeOn(Schedulers.io())
-                            .subscribe(
-                                {
-                                    isRefreshingObservable.onNext(false)
-                                },
-                                {
-                                    isRefreshingObservable.onNext(false)
-                                }
-                            )
-                    )
+                        (disposable as CompositeDisposable).add(
+                            repository.loadNextPage()
+                                .subscribeOn(Schedulers.io())
+                                .subscribe(
+                                    {
+                                        isLoadingObservable.onNext(false)
+                                    },
+                                    {
+                                        isLoadingObservable.onNext(false)
+                                    }
+                                )
+                        )
+                    }
                 }
         )
 

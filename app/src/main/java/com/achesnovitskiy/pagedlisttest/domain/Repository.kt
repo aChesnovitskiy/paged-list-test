@@ -11,7 +11,7 @@ import javax.inject.Inject
 interface Repository {
     val catObservable: Observable<List<DomainCat>>
 
-    var isHasNextPage: Boolean
+    var hasNextPage: Boolean
 
     fun refresh(): Completable
 
@@ -31,7 +31,7 @@ class RepositoryImpl @Inject constructor(
                 }
             }
 
-    override var isHasNextPage: Boolean = true
+    override var hasNextPage: Boolean = false
 
     private var nextPage: Int = 1
 
@@ -45,8 +45,9 @@ class RepositoryImpl @Inject constructor(
 
                 nextPage = 1
 
-                isHasNextPage = (response.headers().get("pagination-count")?.toInt()
-                    ?: 0 - nextPage * CATS_ON_PAGE_LIMIT) > 0
+                val paginationCount = response.headers().get("pagination-count")?.toInt() ?: 0
+
+                hasNextPage = (paginationCount - nextPage * CATS_ON_PAGE_LIMIT) > 0
             }
             .ignoreElements()
 
@@ -57,12 +58,13 @@ class RepositoryImpl @Inject constructor(
 
                 nextPage++
 
-                isHasNextPage = (response.headers().get("pagination-count")?.toInt()
-                    ?: 0 - nextPage * CATS_ON_PAGE_LIMIT) > 0
+                val paginationCount = response.headers().get("pagination-count")?.toInt() ?: 0
+
+                hasNextPage = (paginationCount - nextPage * CATS_ON_PAGE_LIMIT) > 0
             }
             .ignoreElements()
 
     companion object {
-        const val CATS_ON_PAGE_LIMIT = 5
+        const val CATS_ON_PAGE_LIMIT = 10
     }
 }

@@ -14,7 +14,8 @@ import com.squareup.picasso.Picasso
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_cat.view.*
 
-class CatsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class CatsAdapter(private val onReachEndListener: () -> Unit) :
+    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var cats: MutableList<PresentationCat> = mutableListOf()
 
@@ -56,6 +57,10 @@ class CatsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder is CatViewHolder) {
             holder.bind(cats[position])
+
+            if (position == cats.size - 1) {
+                onReachEndListener()
+            }
         }
     }
 
@@ -88,34 +93,31 @@ class CatsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     fun showLoader() {
-        if (cats.isEmpty() || !cats[cats.size - 1].isLoader) {
-            cats.add(
-                PresentationCat(
-                    id = "",
-                    image_url = "",
-                    isLoader = true
+        Handler().post {
+            if (cats.isEmpty() || !cats[cats.size - 1].isLoader) {
+                cats.add(
+                    PresentationCat(
+                        id = "",
+                        image_url = "",
+                        isLoader = true
+                    )
                 )
-            )
 
-            notifyItemInserted(cats.size)
+                notifyItemInserted(cats.size)
+            }
         }
     }
 
     fun hideLoader() {
-        Handler().postDelayed(
-            {
-                val lastIndex = cats.size - 1
+        Handler().post {
+            val lastIndex = cats.size - 1
 
-                if (cats.isNotEmpty() && cats[lastIndex].isLoader) {
-                    cats.removeAt(lastIndex)
+            if (cats.isNotEmpty() && cats[lastIndex].isLoader) {
+                cats.removeAt(lastIndex)
 
-                    notifyItemRemoved(lastIndex)
-                }
-            },
-            200L
-        )
-
-
+                notifyItemRemoved(lastIndex)
+            }
+        }
     }
 
     companion object {
