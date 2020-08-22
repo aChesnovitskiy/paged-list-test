@@ -1,12 +1,12 @@
 package com.achesnovitskiy.pagedlisttest.ui.cats
 
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.achesnovitskiy.pagedlisttest.R
 import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
@@ -14,9 +14,9 @@ import com.squareup.picasso.Picasso
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_cat.view.*
 
-class CatsAdapter : ListAdapter<PresentationCat, RecyclerView.ViewHolder>(
-    CatsDiffCallback()
-) {
+class CatsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+    private var cats: MutableList<PresentationCat> = mutableListOf()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
         when (viewType) {
@@ -51,33 +51,78 @@ class CatsAdapter : ListAdapter<PresentationCat, RecyclerView.ViewHolder>(
             )
         }
 
+    override fun getItemCount(): Int = cats.size
+
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder is CatViewHolder) {
-            holder.bind(getItem(position))
+            holder.bind(cats[position])
         }
     }
 
     override fun getItemViewType(position: Int): Int =
         when {
-            getItem(position).isLoader -> TYPE_LOADER
-            getItem(position).isError -> TYPE_ERROR
+            cats[position].isLoader -> TYPE_LOADER
+            cats[position].isError -> TYPE_ERROR
             else -> TYPE_CAT
         }
+
+    fun updateCats(data: List<PresentationCat>) {
+        val diffCallback = object : DiffUtil.Callback() {
+
+            override fun areItemsTheSame(oldPos: Int, newPos: Int) =
+                cats[oldPos].id == data[newPos].id
+
+            override fun areContentsTheSame(oldPos: Int, newPos: Int) =
+                cats[oldPos] == data[newPos]
+
+            override fun getOldListSize() = cats.size
+
+            override fun getNewListSize() = data.size
+        }
+
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+
+        cats = data.toMutableList()
+
+        diffResult.dispatchUpdatesTo(this)
+    }
+
+    fun showLoader() {
+        if (cats.isEmpty() || !cats[cats.size - 1].isLoader) {
+            cats.add(
+                PresentationCat(
+                    id = "",
+                    image_url = "",
+                    isLoader = true
+                )
+            )
+
+            notifyItemInserted(cats.size)
+        }
+    }
+
+    fun hideLoader() {
+        Handler().postDelayed(
+            {
+                val lastIndex = cats.size - 1
+
+                if (cats.isNotEmpty() && cats[lastIndex].isLoader) {
+                    cats.removeAt(lastIndex)
+
+                    notifyItemRemoved(lastIndex)
+                }
+            },
+            200L
+        )
+
+
+    }
 
     companion object {
         const val TYPE_CAT = 1
         const val TYPE_LOADER = 2
         const val TYPE_ERROR = 3
     }
-}
-
-class CatsDiffCallback : DiffUtil.ItemCallback<PresentationCat>() {
-
-    override fun areItemsTheSame(oldCat: PresentationCat, newCat: PresentationCat): Boolean =
-        oldCat.id == newCat.id
-
-    override fun areContentsTheSame(oldCat: PresentationCat, newCat: PresentationCat): Boolean =
-        oldCat == newCat
 }
 
 class CatViewHolder(override val containerView: View) : RecyclerView.ViewHolder(containerView),

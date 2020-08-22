@@ -12,7 +12,6 @@ import com.achesnovitskiy.pagedlisttest.extensions.showSnackbarWithAction
 import com.achesnovitskiy.pagedlisttest.ui.base.BaseFragment
 import com.achesnovitskiy.pagedlisttest.ui.cats.di.CatsModule
 import com.achesnovitskiy.pagedlisttest.ui.cats.di.DaggerCatsComponent
-import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
@@ -57,9 +56,10 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
 
             catsSwipeRefreshLayout.isRefreshing = false
         }
+
+        catsViewModel.refreshObserver.onNext(Unit)
     }
 
-    @ExperimentalStdlibApi
     override fun onResume() {
         super.onResume()
 
@@ -69,7 +69,7 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { cats ->
-                        catsAdapter.submitList(cats)
+                        catsAdapter.updateCats(cats)
                     },
                     {
                         // TODO
@@ -80,12 +80,12 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                    { isLoading ->
-                        Log.d("My_", "Loading: $isLoading")
-                        if (isLoading) {
-                            showLoader()
+                    { isRefreshing ->
+                        Log.d("My_", "Loading: $isRefreshing")
+                        if (isRefreshing) {
+                            catsAdapter.showLoader()
                         } else {
-                            hideLoader()
+                            catsAdapter.hideLoader()
                         }
                     },
                     {
@@ -110,40 +110,5 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                     }
                 )
         )
-    }
-
-    private fun showLoader() {
-        if (catsAdapter.currentList.isNullOrEmpty() || !catsAdapter.currentList.last().isLoader) {
-            val list: MutableList<PresentationCat> = mutableListOf()
-
-            list.addAll(catsAdapter.currentList)
-
-            list.add(
-                PresentationCat(
-                    id = "",
-                    image_url = "",
-                    isLoader = true
-                )
-            )
-
-            catsAdapter.submitList(list)
-
-            Log.d("My_", "Show loader")
-        }
-    }
-
-    @ExperimentalStdlibApi
-    private fun hideLoader() {
-        if (catsAdapter.currentList.last().isLoader) {
-            val list: MutableList<PresentationCat> = mutableListOf()
-
-            list.addAll(catsAdapter.currentList)
-
-            list.removeLast()
-
-            catsAdapter.submitList(list)
-
-            Log.d("My_", "Hide loader")
-        }
     }
 }
