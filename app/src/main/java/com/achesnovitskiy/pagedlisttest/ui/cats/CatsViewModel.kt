@@ -1,14 +1,14 @@
 package com.achesnovitskiy.pagedlisttest.ui.cats
 
+import android.os.Handler
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
+import com.achesnovitskiy.pagedlisttest.R
 import com.achesnovitskiy.pagedlisttest.domain.Repository
 import com.achesnovitskiy.pagedlisttest.extensions.toPresentationCat
 import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
 import io.reactivex.Observable
 import io.reactivex.Observer
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
-import io.reactivex.disposables.Disposables
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
@@ -17,9 +17,9 @@ interface CatsViewModel {
 
     val catsObservable: Observable<List<PresentationCat>>
 
-    val isLoadingObservable: Observable<Boolean>
+    val refreshingStateObservable: Observable<RefreshingState>
 
-    val refreshErrorObservable: Observable<Unit>
+    val loadingNextPageStateObservable: Observable<LoadingState>
 
     val refreshObserver: Observer<Unit>
 
@@ -29,6 +29,12 @@ interface CatsViewModel {
 class CatsViewModelImpl @Inject constructor(private val repository: Repository) : ViewModel(),
     CatsViewModel {
 
+    private val refreshingStatePubishSubject: PublishSubject<RefreshingState> =
+        PublishSubject.create()
+
+    private val loadingNextPageStatePublishSubject: PublishSubject<LoadingState> =
+        PublishSubject.create()
+
     override val catsObservable: Observable<List<PresentationCat>>
         get() = repository.catObservable
             .map { domainCats ->
@@ -36,64 +42,88 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
                     domainCat.toPresentationCat()
                 }
             }
+            .subscribeOn(Schedulers.io())
 
-    override val isLoadingObservable: PublishSubject<Boolean> = PublishSubject.create()
+    override val refreshingStateObservable: Observable<RefreshingState>
+        get() = refreshingStatePubishSubject
 
-    override val refreshErrorObservable: PublishSubject<Unit> = PublishSubject.create()
+    override val loadingNextPageStateObservable: Observable<LoadingState>
+        get() = loadingNextPageStatePublishSubject
 
     override val refreshObserver: PublishSubject<Unit> = PublishSubject.create()
 
     override val loadNextPageObserver: PublishSubject<Unit> = PublishSubject.create()
 
-    private var disposable: Disposable = Disposables.disposed()
-
     init {
-        disposable = CompositeDisposable(
-            refreshObserver
-                .subscribe {
-                    isLoadingObservable.onNext(true)
-
-                    (disposable as CompositeDisposable).add(
-                        repository.refresh()
-                            .subscribeOn(Schedulers.io())
-                            .subscribe(
-                                {
-                                    isLoadingObservable.onNext(false)
-                                },
-                                {
-                                    isLoadingObservable.onNext(false)
-
-                                    refreshErrorObservable.onNext(Unit)
-                                }
+        refreshObserver
+            .switchMap {
+                repository.refreshCompletable
+                    .andThen(
+                        Observable.just(
+                            RefreshingState(
+                                isRefreshing = false,
+                                errorRes = null
                             )
-                    )
-                },
-
-            loadNextPageObserver
-                .subscribe {
-                    if (repository.hasNextPage) {
-                        isLoadingObservable.onNext(true)
-
-                        (disposable as CompositeDisposable).add(
-                            repository.loadNextPage()
-                                .subscribeOn(Schedulers.io())
-                                .subscribe(
-                                    {
-                                        isLoadingObservable.onNext(false)
-                                    },
-                                    {
-                                        isLoadingObservable.onNext(false)
-                                    }
-                                )
                         )
-                    }
-                }
+                    )
+                    .startWith(
+                        RefreshingState(
+                            isRefreshing = true,
+                            errorRes = null
+                        )
+                    )
+                    .onErrorReturnItem(
+                        RefreshingState(
+                            isRefreshing = false,
+                            errorRes = R.string.msg_refreshing_error
+                        )
+                    )
+            }
+            .subscribeOn(Schedulers.io())
+            .subscribe(refreshingStatePubishSubject)
+
+        loadNextPageObserver
+            .switchMap {
+                repository.loadNextPageCompletable
+                    .andThen(
+                        Observable.just(
+                            LoadingState(
+                                isLoading = false,
+                                errorRes = null
+                            )
+                        )
+                    )
+                    .startWith(
+                        LoadingState(
+                            isLoading = true,
+                            errorRes = null
+                        )
+                    )
+                    .onErrorReturnItem(
+                        LoadingState(
+                            isLoading = false,
+                            errorRes = R.string.msg_loading_error
+                        )
+                    )
+            }
+            .subscribeOn(Schedulers.io())
+            .subscribe(loadingNextPageStatePublishSubject)
+
+        Handler().postDelayed(
+            {
+                refreshObserver.onNext(Unit)
+            },
+            100L
         )
-
-        refreshObserver.onNext(Unit)
-    }
-
-    override fun onCleared() {
-        disposable.dispose()
     }
 }
+
+data class RefreshingState(
+    val isRefreshing: Boolean,
+    @StringRes val errorRes: Int?
+)
+
+data class LoadingState(
+    val isLoading: Boolean,
+    @StringRes val errorRes: Int?
+)

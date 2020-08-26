@@ -7,13 +7,12 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.achesnovitskiy.pagedlisttest.R
 import com.achesnovitskiy.pagedlisttest.app.App.Companion.appComponent
-import com.achesnovitskiy.pagedlisttest.extensions.showSnackbarWithAction
 import com.achesnovitskiy.pagedlisttest.ui.base.BaseFragment
 import com.achesnovitskiy.pagedlisttest.ui.cats.di.CatsModule
 import com.achesnovitskiy.pagedlisttest.ui.cats.di.DaggerCatsComponent
+import com.google.android.material.snackbar.Snackbar
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_cats.*
 import javax.inject.Inject
 
@@ -27,6 +26,10 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
             catsViewModel.loadNextPageObserver.onNext(Unit)
         }
     }
+
+    private lateinit var snackbar: Snackbar
+
+    private var isSnackbarInitialized: Boolean = false
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -64,49 +67,65 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
 
         disposable = CompositeDisposable(
             catsViewModel.catsObservable
-                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { cats ->
-                        catsAdapter.updateCats(cats)
-                    },
-                    {
-                        // TODO
-                    }
-                ),
+                .subscribe { cats ->
+                    catsAdapter.updateCats(cats)
+                },
 
-            catsViewModel.isLoadingObservable
-                .subscribeOn(Schedulers.io())
+            catsViewModel.refreshingStateObservable
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { isRefreshing ->
-                        if (isRefreshing) {
-                            catsAdapter.showLoader()
-                        } else {
-                            catsAdapter.hideLoader()
-                        }
-                    },
-                    {
-                        // TODO
+                .subscribe { refreshingState ->
+                    if (refreshingState.isRefreshing) {
+                        catsAdapter.showLoader()
+                    } else {
+                        catsAdapter.hideLoader()
                     }
-                ),
 
-            catsViewModel.refreshErrorObservable
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    {
-                        this.showSnackbarWithAction(
-                            message = getString(R.string.msg_refresh_error),
-                            actionText = getString(R.string.action_repeat)
-                        ) {
-                            catsViewModel.refreshObserver.onNext(Unit)
-                        }
-                    },
-                    {
-                        // TODO
+                    if (refreshingState.errorRes != null) {
+                        showSnackbar(getString(refreshingState.errorRes))
+                    } else {
+                        dismissSnackbar()
                     }
-                )
+                },
+
+            catsViewModel.loadingNextPageStateObservable
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { loadingState ->
+                    if (loadingState.isLoading) {
+                        catsAdapter.showLoader()
+                    } else {
+                        catsAdapter.hideLoader()
+                    }
+
+                    if (loadingState.errorRes != null) {
+                        showSnackbar(getString(loadingState.errorRes))
+                    } else {
+                        dismissSnackbar()
+                    }
+                }
         )
+    }
+
+    private fun showSnackbar(text: String) {
+        snackbar = Snackbar.make(
+            requireView(),
+            text,
+            Snackbar.LENGTH_INDEFINITE
+        ).apply {
+            setAction(getString(R.string.action_repeat)) {
+                catsViewModel.refreshObserver.onNext(Unit)
+            }
+            show()
+        }
+
+        isSnackbarInitialized = true
+    }
+
+    private fun dismissSnackbar() {
+        if (isSnackbarInitialized) {
+            snackbar.dismiss()
+
+            isSnackbarInitialized = false
+        }
     }
 }
