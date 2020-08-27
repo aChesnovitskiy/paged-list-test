@@ -57,8 +57,6 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
 
         catsSwipeRefreshLayout.setOnRefreshListener {
             catsViewModel.refreshObserver.onNext(Unit)
-
-            catsSwipeRefreshLayout.isRefreshing = false
         }
     }
 
@@ -75,11 +73,7 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
             catsViewModel.refreshingStateObservable
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { refreshingState ->
-                    if (refreshingState.isRefreshing) {
-                        catsAdapter.showLoader()
-                    } else {
-                        catsAdapter.hideLoader()
-                    }
+                    catsSwipeRefreshLayout.isRefreshing = refreshingState.isRefreshing
 
                     if (refreshingState.errorRes != null) {
                         showSnackbar(getString(refreshingState.errorRes))
