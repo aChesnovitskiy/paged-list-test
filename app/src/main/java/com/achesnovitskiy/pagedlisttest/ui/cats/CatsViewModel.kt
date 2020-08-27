@@ -9,13 +9,14 @@ import com.achesnovitskiy.pagedlisttest.extensions.toPresentationCat
 import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
 import io.reactivex.Observable
 import io.reactivex.Observer
+import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
 
 interface CatsViewModel {
 
-    val catsObservable: Observable<List<PresentationCat>>
+    val catsAndHasNextPageObservable: Observable<Pair<List<PresentationCat>, Boolean>>
 
     val refreshingStateObservable: Observable<RefreshingState>
 
@@ -35,13 +36,21 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
     private val loadingNextPageStatePublishSubject: PublishSubject<LoadingState> =
         PublishSubject.create()
 
-    override val catsObservable: Observable<List<PresentationCat>>
-        get() = repository.catObservable
-            .map { domainCats ->
-                domainCats.map { domainCat ->
-                    domainCat.toPresentationCat()
+    override val catsAndHasNextPageObservable: Observable<Pair<List<PresentationCat>, Boolean>>
+        get() = Observable
+            .combineLatest(
+                repository.catObservable
+                    .map { domainCats ->
+                        domainCats.map { domainCat ->
+                            domainCat.toPresentationCat()
+                        }
+                    },
+                repository.hasNextPageObservable,
+                BiFunction { cats: List<PresentationCat>, hasNextPage: Boolean ->
+                    cats to hasNextPage
                 }
-            }
+            )
+
             .subscribeOn(Schedulers.io())
 
     override val refreshingStateObservable: Observable<RefreshingState>

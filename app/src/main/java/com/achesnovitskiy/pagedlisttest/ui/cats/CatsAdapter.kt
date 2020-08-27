@@ -19,6 +19,12 @@ class CatsAdapter(private val onReachEndListener: () -> Unit) :
 
     private var cats: MutableList<PresentationCat> = mutableListOf()
 
+    private val loaderCat = PresentationCat(
+        id = "-1",
+        image_url = "",
+        isLoader = true
+    )
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
         when (viewType) {
             TYPE_CAT -> CatViewHolder(
@@ -95,13 +101,7 @@ class CatsAdapter(private val onReachEndListener: () -> Unit) :
     fun showLoader() {
         Handler().post {
             if (cats.isEmpty() || !cats[cats.size - 1].isLoader) {
-                cats.add(
-                    PresentationCat(
-                        id = "",
-                        image_url = "",
-                        isLoader = true
-                    )
-                )
+                cats.add(loaderCat)
 
                 notifyItemInserted(cats.size)
             }

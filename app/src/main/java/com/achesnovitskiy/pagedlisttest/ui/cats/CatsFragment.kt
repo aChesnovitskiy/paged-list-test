@@ -10,6 +10,7 @@ import com.achesnovitskiy.pagedlisttest.app.App.Companion.appComponent
 import com.achesnovitskiy.pagedlisttest.ui.base.BaseFragment
 import com.achesnovitskiy.pagedlisttest.ui.cats.di.CatsModule
 import com.achesnovitskiy.pagedlisttest.ui.cats.di.DaggerCatsComponent
+import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -23,7 +24,7 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
 
     private val catsAdapter: CatsAdapter by lazy(LazyThreadSafetyMode.NONE) {
         CatsAdapter {
-            catsViewModel.loadNextPageObserver.onNext(Unit)
+//            catsViewModel.loadNextPageObserver.onNext(Unit)
         }
     }
 
@@ -64,10 +65,20 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
         super.onResume()
 
         disposable = CompositeDisposable(
-            catsViewModel.catsObservable
+            catsViewModel.catsAndHasNextPageObservable
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { cats ->
+                .subscribe {
+                    val cats: List<PresentationCat> = it.first
+
+                    val hasNextPage: Boolean = it.second
+
                     catsAdapter.updateCats(cats)
+
+                    if (hasNextPage) {
+                        catsAdapter.showLoader()
+                    } else {
+                        catsAdapter.hideLoader()
+                    }
                 },
 
             catsViewModel.refreshingStateObservable
@@ -76,6 +87,8 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                     catsSwipeRefreshLayout.isRefreshing = refreshingState.isRefreshing
 
                     if (refreshingState.errorRes != null) {
+                        catsAdapter.hideLoader()
+
                         showSnackbar(getString(refreshingState.errorRes))
                     } else {
                         dismissSnackbar()
