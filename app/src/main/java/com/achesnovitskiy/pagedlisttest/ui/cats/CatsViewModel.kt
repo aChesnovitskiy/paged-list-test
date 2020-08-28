@@ -50,7 +50,6 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
                     cats to hasNextPage
                 }
             )
-
             .subscribeOn(Schedulers.io())
 
     override val refreshingStateObservable: Observable<RefreshingState>
