@@ -26,7 +26,8 @@ class RepositoryImpl @Inject constructor(
     private val db: Db
 ) : Repository {
 
-    private var hasNextPageBehaviorSubject: BehaviorSubject<Boolean> = BehaviorSubject.create()
+    private var hasNextPageBehaviorSubject: BehaviorSubject<Boolean> =
+        BehaviorSubject.createDefault(false)
 
     private var nextPage: Int = 1
 
