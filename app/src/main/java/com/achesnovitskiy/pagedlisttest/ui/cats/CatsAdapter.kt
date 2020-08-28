@@ -14,7 +14,7 @@ import com.squareup.picasso.Picasso
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_cat.view.*
 
-class CatsAdapter(private val onReachEndListener: () -> Unit) :
+class CatsAdapter(private val onLoadesIsVisibleListener: () -> Unit) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var cats: MutableList<PresentationCat> = mutableListOf()
@@ -63,10 +63,8 @@ class CatsAdapter(private val onReachEndListener: () -> Unit) :
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder is CatViewHolder) {
             holder.bind(cats[position])
-
-            if (position == cats.size - 1) {
-                onReachEndListener()
-            }
+        } else {
+            onLoadesIsVisibleListener()
         }
     }
 

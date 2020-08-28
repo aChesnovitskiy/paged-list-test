@@ -64,7 +64,7 @@ class RepositoryImpl @Inject constructor(
     override val loadNextPageCompletable: Completable
         get() = api.getCats(nextPage, CATS_ON_PAGE_LIMIT)
             .doOnNext { response ->
-                db.catsDao.insertCats(response.body() ?: emptyList())
+                db.catsDao.insertCats(response.body() as List<Cat>)
 
                 nextPage++
 

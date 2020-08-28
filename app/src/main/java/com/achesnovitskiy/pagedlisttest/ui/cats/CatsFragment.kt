@@ -24,7 +24,7 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
 
     private val catsAdapter: CatsAdapter by lazy(LazyThreadSafetyMode.NONE) {
         CatsAdapter {
-//            catsViewModel.loadNextPageObserver.onNext(Unit)
+            catsViewModel.loadNextPageObserver.onNext(Unit)
         }
     }
 
