@@ -2,6 +2,7 @@ package com.achesnovitskiy.pagedlisttest.ui.cats
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -68,12 +69,16 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
         disposable = CompositeDisposable(
             catsViewModel.catsAndHasNextPageObservable
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { it: Pair<List<PresentationCat>, Boolean> ->
+                .subscribe {
+                    val catsFromDb: List<PresentationCat> = it.first
+
+                    val hasNextPage: Boolean = it.second
+
                     val cats: MutableList<PresentationCat> = mutableListOf()
 
-                    cats.addAll(it.first)
+                    cats.addAll(catsFromDb)
 
-                    if (it.second) {
+                    if (hasNextPage) {
                         cats.add(loaderCat)
                     }
 

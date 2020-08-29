@@ -102,14 +102,12 @@ class CatsAdapter(private val onLoadesIsVisibleListener: () -> Unit) :
     }
 
     fun hideLoader() {
-        Handler().post {
-            val lastIndex = cats.size - 1
+        val lastIndex = cats.size - 1
 
-            if (cats.isNotEmpty() && cats[lastIndex].isLoader) {
-                cats.removeAt(lastIndex)
+        if (cats.isNotEmpty() && cats[lastIndex].isLoader) {
+            cats.removeAt(lastIndex)
 
-                notifyItemRemoved(lastIndex)
-            }
+            notifyItemRemoved(lastIndex)
         }
     }
 
