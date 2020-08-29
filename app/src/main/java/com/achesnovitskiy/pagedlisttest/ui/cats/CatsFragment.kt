@@ -11,6 +11,7 @@ import com.achesnovitskiy.pagedlisttest.ui.base.BaseFragment
 import com.achesnovitskiy.pagedlisttest.ui.cats.di.CatsModule
 import com.achesnovitskiy.pagedlisttest.ui.cats.di.DaggerCatsComponent
 import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
+import com.achesnovitskiy.pagedlisttest.ui.entities.loaderCat
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -67,18 +68,16 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
         disposable = CompositeDisposable(
             catsViewModel.catsAndHasNextPageObservable
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe {
-                    val cats: List<PresentationCat> = it.first
+                .subscribe { it: Pair<List<PresentationCat>, Boolean> ->
+                    val cats: MutableList<PresentationCat> = mutableListOf()
 
-                    val hasNextPage: Boolean = it.second
+                    cats.addAll(it.first)
+
+                    if (it.second) {
+                        cats.add(loaderCat)
+                    }
 
                     catsAdapter.updateCats(cats)
-
-                    if (hasNextPage) {
-                        catsAdapter.showLoader()
-                    } else {
-                        catsAdapter.hideLoader()
-                    }
                 },
 
             catsViewModel.refreshingStateObservable
@@ -99,7 +98,7 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { loadingState ->
                     if (loadingState.isLoading) {
-                        catsAdapter.showLoader()
+//                        catsAdapter.showLoader()
                     } else {
                         catsAdapter.hideLoader()
                     }

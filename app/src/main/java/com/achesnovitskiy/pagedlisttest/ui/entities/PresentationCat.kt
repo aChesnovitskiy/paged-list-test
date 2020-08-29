@@ -6,3 +6,9 @@ data class PresentationCat(
     val isLoader: Boolean = false,
     val isError: Boolean = false
 )
+
+val loaderCat = PresentationCat(
+    id = "-1",
+    image_url = "",
+    isLoader = true
+)

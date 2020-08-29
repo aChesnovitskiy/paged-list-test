@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.achesnovitskiy.pagedlisttest.R
 import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
+import com.achesnovitskiy.pagedlisttest.ui.entities.loaderCat
 import com.squareup.picasso.Picasso
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_cat.view.*
@@ -18,12 +19,6 @@ class CatsAdapter(private val onLoadesIsVisibleListener: () -> Unit) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var cats: MutableList<PresentationCat> = mutableListOf()
-
-    private val loaderCat = PresentationCat(
-        id = "-1",
-        image_url = "",
-        isLoader = true
-    )
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
         when (viewType) {
