@@ -2,7 +2,6 @@ package com.achesnovitskiy.pagedlisttest.ui.cats
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -102,14 +101,16 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
             catsViewModel.loadingNextPageStateObservable
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { loadingState ->
-                    if (loadingState.isLoading) {
-//                        catsAdapter.showLoader()
-                    } else {
+                    if (!loadingState.isLoading) {
                         catsAdapter.hideLoader()
                     }
 
                     if (loadingState.errorRes != null) {
-                        showSnackbar(getString(loadingState.errorRes))
+                        if (catsAdapter.itemCount == 0) {
+                            showSnackbar(getString(loadingState.errorRes))
+                        } else {
+                            catsAdapter.showError()
+                        }
                     } else {
                         dismissSnackbar()
                     }

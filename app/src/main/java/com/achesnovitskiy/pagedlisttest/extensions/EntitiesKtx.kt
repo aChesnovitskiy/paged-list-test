@@ -11,5 +11,7 @@ fun Cat.toDomainCat(): DomainCat = DomainCat(
 
 fun DomainCat.toPresentationCat(): PresentationCat = PresentationCat(
     id = this.id,
-    image_url = this.image_url
+    image_url = this.image_url,
+    isLoader = false,
+    isError = false
 )

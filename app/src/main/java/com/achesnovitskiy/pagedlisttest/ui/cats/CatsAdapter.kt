@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.achesnovitskiy.pagedlisttest.R
 import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
+import com.achesnovitskiy.pagedlisttest.ui.entities.errorCat
 import com.achesnovitskiy.pagedlisttest.ui.entities.loaderCat
 import com.squareup.picasso.Picasso
 import kotlinx.android.extensions.LayoutContainer
@@ -91,16 +92,6 @@ class CatsAdapter(private val onLoadesIsVisibleListener: () -> Unit) :
         diffResult.dispatchUpdatesTo(this)
     }
 
-    fun showLoader() {
-        Handler().post {
-            if (cats.isEmpty() || !cats[cats.size - 1].isLoader) {
-                cats.add(loaderCat)
-
-                notifyItemInserted(cats.size)
-            }
-        }
-    }
-
     fun hideLoader() {
         val lastIndex = cats.size - 1
 
@@ -108,6 +99,16 @@ class CatsAdapter(private val onLoadesIsVisibleListener: () -> Unit) :
             cats.removeAt(lastIndex)
 
             notifyItemRemoved(lastIndex)
+        }
+    }
+
+    fun showError() {
+        Handler().post {
+            if (cats.isEmpty() || !cats[cats.size - 1].isError) {
+                cats.add(errorCat)
+
+                notifyItemInserted(cats.size)
+            }
         }
     }
 
