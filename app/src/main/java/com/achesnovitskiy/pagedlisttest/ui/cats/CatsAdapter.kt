@@ -1,6 +1,5 @@
 package com.achesnovitskiy.pagedlisttest.ui.cats
 
-import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +10,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.achesnovitskiy.pagedlisttest.R
 import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
 import com.achesnovitskiy.pagedlisttest.ui.entities.errorCat
-import com.achesnovitskiy.pagedlisttest.ui.entities.loaderCat
 import com.squareup.picasso.Picasso
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_cat.view.*
@@ -33,7 +31,7 @@ class CatsAdapter(private val onLoadesIsVisibleListener: () -> Unit) :
                     )
             )
 
-            TYPE_LOADER -> ServiceViewHolder(
+            TYPE_LOADER -> LoaderViewHolder(
                 LayoutInflater
                     .from(parent.context)
                     .inflate(
@@ -43,7 +41,7 @@ class CatsAdapter(private val onLoadesIsVisibleListener: () -> Unit) :
                     )
             )
 
-            else -> ServiceViewHolder(
+            else -> ErrorViewHolder(
                 LayoutInflater
                     .from(parent.context)
                     .inflate(
@@ -57,10 +55,9 @@ class CatsAdapter(private val onLoadesIsVisibleListener: () -> Unit) :
     override fun getItemCount(): Int = cats.size
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        if (holder is CatViewHolder) {
-            holder.bind(cats[position])
-        } else {
-            onLoadesIsVisibleListener()
+        when (holder) {
+            is CatViewHolder -> holder.bind(cats[position])
+            is LoaderViewHolder -> onLoadesIsVisibleListener()
         }
     }
 
@@ -103,12 +100,10 @@ class CatsAdapter(private val onLoadesIsVisibleListener: () -> Unit) :
     }
 
     fun showError() {
-        Handler().post {
-            if (cats.isEmpty() || !cats[cats.size - 1].isError) {
-                cats.add(errorCat)
+        if (cats.isEmpty() || !cats[cats.size - 1].isError) {
+            cats.add(errorCat)
 
-                notifyItemInserted(cats.size)
-            }
+            notifyItemInserted(cats.size)
         }
     }
 
@@ -138,4 +133,6 @@ class CatViewHolder(override val containerView: View) : RecyclerView.ViewHolder(
     }
 }
 
-class ServiceViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+class LoaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+
+class ErrorViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
