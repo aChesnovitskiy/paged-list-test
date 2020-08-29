@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.achesnovitskiy.pagedlisttest.R
@@ -14,7 +15,10 @@ import com.squareup.picasso.Picasso
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_cat.view.*
 
-class CatsAdapter(private val onLoadesIsVisibleListener: () -> Unit) :
+class CatsAdapter(
+    private val onCatLongClickListener: (PresentationCat) -> Unit,
+    private val onLoadesIsVisibleListener: () -> Unit
+) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var cats: MutableList<PresentationCat> = mutableListOf()
@@ -112,27 +116,42 @@ class CatsAdapter(private val onLoadesIsVisibleListener: () -> Unit) :
         const val TYPE_LOADER = 2
         const val TYPE_ERROR = 3
     }
-}
 
-class CatViewHolder(override val containerView: View) : RecyclerView.ViewHolder(containerView),
-    LayoutContainer {
+    inner class CatViewHolder(override val containerView: View) :
+        RecyclerView.ViewHolder(containerView), LayoutContainer {
 
-    private val itemCatImageView: ImageView = containerView.itemCatImageView
+        private val itemCatImageView: ImageView = containerView.itemCatImageView
 
-    private val itemCatIdTextView: TextView = containerView.itemCatIdTextView
+        private val itemCatIdTextView: TextView = containerView.itemCatIdTextView
 
-    fun bind(cat: PresentationCat) {
-        Picasso.get()
-            .load(cat.image_url)
-            .error(R.drawable.ic_broken_image_black_48)
-            .resize(200, 200)
-            .centerCrop()
-            .into(itemCatImageView)
+        fun bind(cat: PresentationCat) {
+            Picasso.get()
+                .load(cat.image_url)
+                .error(R.drawable.ic_broken_image_black_48)
+                .resize(200, 200)
+                .centerCrop()
+                .into(itemCatImageView)
 
-        itemCatIdTextView.text = cat.id
+            itemCatIdTextView.text = cat.id
+
+            if (cat.isSelected) {
+                val backgroundColor: Int = ContextCompat.getColor(
+                    itemView.context,
+                    R.color.colorSelectedItemBackground
+                )
+
+                itemView.setBackgroundColor(backgroundColor)
+            }
+
+            itemView.setOnLongClickListener {
+                onCatLongClickListener.invoke(cat)
+
+                true
+            }
+        }
     }
+
+    class LoaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+
+    class ErrorViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 }
-
-class LoaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
-
-class ErrorViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)

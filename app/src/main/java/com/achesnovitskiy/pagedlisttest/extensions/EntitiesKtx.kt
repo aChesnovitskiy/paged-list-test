@@ -12,6 +12,7 @@ fun Cat.toDomainCat(): DomainCat = DomainCat(
 fun DomainCat.toPresentationCat(): PresentationCat = PresentationCat(
     id = this.id,
     image_url = this.image_url,
+    isSelected = false,
     isLoader = false,
     isError = false
 )

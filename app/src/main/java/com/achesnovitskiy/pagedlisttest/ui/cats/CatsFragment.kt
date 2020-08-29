@@ -2,6 +2,7 @@ package com.achesnovitskiy.pagedlisttest.ui.cats
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,9 +25,10 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
     lateinit var catsViewModel: CatsViewModel
 
     private val catsAdapter: CatsAdapter by lazy(LazyThreadSafetyMode.NONE) {
-        CatsAdapter {
-            catsViewModel.loadNextPageObserver.onNext(Unit)
-        }
+        CatsAdapter(
+            this::selectCat,
+            this::loadNextPage
+        )
     }
 
     private lateinit var snackbar: Snackbar
@@ -116,6 +118,14 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                     }
                 }
         )
+    }
+
+    private fun selectCat(cat: PresentationCat) {
+        Log.d("My_", "Selected cat: ${cat.id}")
+    }
+
+    private fun loadNextPage() {
+        catsViewModel.loadNextPageObserver.onNext(Unit)
     }
 
     private fun showSnackbar(text: String) {
