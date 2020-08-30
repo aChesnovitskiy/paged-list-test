@@ -17,7 +17,7 @@ import kotlinx.android.synthetic.main.item_cat.view.*
 
 class CatsAdapter(
     private val onCatLongClickListener: (PresentationCat) -> Unit,
-    private val onLoadesIsVisibleListener: () -> Unit
+    private val onLoaderIsVisibleListener: () -> Unit
 ) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -61,7 +61,7 @@ class CatsAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
             is CatViewHolder -> holder.bind(cats[position])
-            is LoaderViewHolder -> onLoadesIsVisibleListener()
+            is LoaderViewHolder -> onLoaderIsVisibleListener()
         }
     }
 

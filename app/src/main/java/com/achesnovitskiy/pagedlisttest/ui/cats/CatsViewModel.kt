@@ -9,14 +9,18 @@ import com.achesnovitskiy.pagedlisttest.extensions.toPresentationCat
 import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
 import io.reactivex.Observable
 import io.reactivex.Observer
-import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
 
 interface CatsViewModel {
 
-    val catsAndHasNextPageObservable: Observable<Pair<List<PresentationCat>, Boolean>>
+    val catsObservable: Observable<List<PresentationCat>>
+
+    val selectedCatsObservable: Observable<List<PresentationCat>>
+
+    val hasNextPageObservable: Observable<Boolean>
 
     val refreshingStateObservable: Observable<RefreshingState>
 
@@ -25,35 +29,43 @@ interface CatsViewModel {
     val refreshObserver: Observer<Unit>
 
     val loadNextPageObserver: Observer<Unit>
+
+    val toggleCatSelectionObserver: Observer<PresentationCat>
+
+    val clearSelectedCatsObserver: Observer<Unit>
 }
 
 class CatsViewModelImpl @Inject constructor(private val repository: Repository) : ViewModel(),
     CatsViewModel {
 
-    private val refreshingStatePubishSubject: PublishSubject<RefreshingState> =
+    private val selectedCats: MutableList<PresentationCat> = mutableListOf()
+
+    private val selectedCatsBehaviorSubject: BehaviorSubject<List<PresentationCat>> =
+        BehaviorSubject.createDefault(emptyList())
+
+    private val refreshingStatePublishSubject: PublishSubject<RefreshingState> =
         PublishSubject.create()
 
     private val loadingNextPageStatePublishSubject: PublishSubject<LoadingState> =
         PublishSubject.create()
 
-    override val catsAndHasNextPageObservable: Observable<Pair<List<PresentationCat>, Boolean>>
-        get() = Observable
-            .combineLatest(
-                repository.catObservable
-                    .map { domainCats ->
-                        domainCats.map { domainCat ->
-                            domainCat.toPresentationCat()
-                        }
-                    },
-                repository.hasNextPageObservable,
-                BiFunction { cats: List<PresentationCat>, hasNextPage: Boolean ->
-                    cats to hasNextPage
+    override val catsObservable: Observable<List<PresentationCat>>
+        get() = repository.catObservable
+            .map { domainCats ->
+                domainCats.map { domainCat ->
+                    domainCat.toPresentationCat()
                 }
-            )
+            }
             .subscribeOn(Schedulers.io())
 
+    override val selectedCatsObservable: Observable<List<PresentationCat>>
+        get() = selectedCatsBehaviorSubject
+
+    override val hasNextPageObservable: Observable<Boolean>
+        get() = repository.hasNextPageObservable
+
     override val refreshingStateObservable: Observable<RefreshingState>
-        get() = refreshingStatePubishSubject
+        get() = refreshingStatePublishSubject
 
     override val loadingNextPageStateObservable: Observable<LoadingState>
         get() = loadingNextPageStatePublishSubject
@@ -62,7 +74,40 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
 
     override val loadNextPageObserver: PublishSubject<Unit> = PublishSubject.create()
 
+    override val toggleCatSelectionObserver: PublishSubject<PresentationCat> =
+        PublishSubject.create()
+
+    override val clearSelectedCatsObserver: PublishSubject<Unit> = PublishSubject.create()
+
     init {
+        toggleCatSelectionObserver
+            .map { cat ->
+                when (cat.isSelected) {
+                    true -> {
+                        if (selectedCats.contains(cat)) {
+                            selectedCats.remove(cat)
+                        }
+                    }
+
+                    false -> selectedCats.add(
+                        cat.copy(isSelected = true)
+                    )
+                }
+
+                selectedCats
+            }
+            .subscribeOn(Schedulers.io())
+            .subscribe(selectedCatsBehaviorSubject)
+
+        clearSelectedCatsObserver
+            .map {
+                selectedCats.clear()
+
+                selectedCats
+            }
+            .subscribeOn(Schedulers.io())
+            .subscribe(selectedCatsBehaviorSubject)
+
         refreshObserver
             .switchMap {
                 repository.refreshCompletable
@@ -88,7 +133,7 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
                     )
             }
             .subscribeOn(Schedulers.io())
-            .subscribe(refreshingStatePubishSubject)
+            .subscribe(refreshingStatePublishSubject)
 
         loadNextPageObserver
             .switchMap {

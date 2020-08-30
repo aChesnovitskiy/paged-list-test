@@ -2,8 +2,8 @@ package com.achesnovitskiy.pagedlisttest.ui.cats
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.View
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.achesnovitskiy.pagedlisttest.R
@@ -14,8 +14,10 @@ import com.achesnovitskiy.pagedlisttest.ui.cats.di.DaggerCatsComponent
 import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
 import com.achesnovitskiy.pagedlisttest.ui.entities.loaderCat
 import com.google.android.material.snackbar.Snackbar
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.functions.Function3
 import kotlinx.android.synthetic.main.fragment_cats.*
 import javax.inject.Inject
 
@@ -26,7 +28,7 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
 
     private val catsAdapter: CatsAdapter by lazy(LazyThreadSafetyMode.NONE) {
         CatsAdapter(
-            this::selectCat,
+            this::toggleCatSelection,
             this::loadNextPage
         )
     }
@@ -68,21 +70,32 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
         super.onResume()
 
         disposable = CompositeDisposable(
-            catsViewModel.catsAndHasNextPageObservable
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe {
-                    val catsFromDb: List<PresentationCat> = it.first
+            Observable
+                .combineLatest(
+                    catsViewModel.catsObservable,
+                    catsViewModel.selectedCatsObservable,
+                    catsViewModel.hasNextPageObservable,
+                    Function3 { cats: List<PresentationCat>, selectedCats: List<PresentationCat>,
+                                hasNextPage: Boolean ->
+                        catsDeleteFloatingActionButton.isVisible = selectedCats.isNotEmpty()
 
-                    val hasNextPage: Boolean = it.second
+                        val resultCats: MutableList<PresentationCat> = cats
+                            .map { cat ->
+                                selectedCats.firstOrNull {
+                                    it.id == cat.id
+                                } ?: cat
+                            }
+                            .toMutableList()
 
-                    val cats: MutableList<PresentationCat> = mutableListOf()
+                        if (hasNextPage) {
+                            resultCats.add(loaderCat)
+                        }
 
-                    cats.addAll(catsFromDb)
-
-                    if (hasNextPage) {
-                        cats.add(loaderCat)
+                        resultCats
                     }
-
+                )
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { cats ->
                     catsAdapter.updateCats(cats)
                 },
 
@@ -97,6 +110,8 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                         showSnackbar(getString(refreshingState.errorRes))
                     } else {
                         dismissSnackbar()
+
+                        catsViewModel.clearSelectedCatsObserver.onNext(Unit)
                     }
                 },
 
@@ -120,8 +135,8 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
         )
     }
 
-    private fun selectCat(cat: PresentationCat) {
-        Log.d("My_", "Selected cat: ${cat.id}")
+    private fun toggleCatSelection(cat: PresentationCat) {
+        catsViewModel.toggleCatSelectionObserver.onNext(cat)
     }
 
     private fun loadNextPage() {
