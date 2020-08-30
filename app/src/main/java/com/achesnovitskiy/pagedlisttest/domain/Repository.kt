@@ -19,6 +19,8 @@ interface Repository {
     val refreshCompletable: Completable
 
     val loadNextPageCompletable: Completable
+
+    fun deleteCatCompletable(id: Int): Completable
 }
 
 class RepositoryImpl @Inject constructor(
@@ -76,6 +78,8 @@ class RepositoryImpl @Inject constructor(
             }
             .ignoreElements()
             .subscribeOn(Schedulers.io())
+
+    override fun deleteCatCompletable(id: Int): Completable = api.deleteCat(id)
 
     companion object {
         const val CATS_ON_PAGE_LIMIT = 7

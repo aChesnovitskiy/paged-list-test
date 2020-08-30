@@ -64,6 +64,10 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
         catsSwipeRefreshLayout.setOnRefreshListener {
             catsViewModel.refreshObserver.onNext(Unit)
         }
+
+        catsDeleteFloatingActionButton.setOnClickListener {
+            catsViewModel.deleteSelectedCatsObserver.onNext(Unit)
+        }
     }
 
     override fun onResume() {

@@ -3,5 +3,6 @@
     <string name="msg_loading_cats">Loading cats</string>
     <string name="msg_loading_error">Loading error. Check your internet connection</string>
     <string name="msg_refreshing_error">Refreshing error. Check your internet connection</string>
+    <string name="msg_deleting_error">Deleting error. Check your internet connection</string>
     <string name="action_repeat">Repeat</string>
 </resources>

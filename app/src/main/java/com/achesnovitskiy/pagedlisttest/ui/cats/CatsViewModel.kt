@@ -26,6 +26,8 @@ interface CatsViewModel {
 
     val loadingNextPageStateObservable: Observable<LoadingState>
 
+    val deletingSelectedCatsStateObservable: Observable<DeletingState>
+
     val refreshObserver: Observer<Unit>
 
     val loadNextPageObserver: Observer<Unit>
@@ -33,6 +35,8 @@ interface CatsViewModel {
     val toggleCatSelectionObserver: Observer<PresentationCat>
 
     val clearSelectedCatsObserver: Observer<Unit>
+
+    val deleteSelectedCatsObserver: Observer<Unit>
 }
 
 class CatsViewModelImpl @Inject constructor(private val repository: Repository) : ViewModel(),
@@ -47,6 +51,9 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
         PublishSubject.create()
 
     private val loadingNextPageStatePublishSubject: PublishSubject<LoadingState> =
+        PublishSubject.create()
+
+    private val deletingSelectedCatsStatePublishSubject: PublishSubject<DeletingState> =
         PublishSubject.create()
 
     override val catsObservable: Observable<List<PresentationCat>>
@@ -70,6 +77,9 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
     override val loadingNextPageStateObservable: Observable<LoadingState>
         get() = loadingNextPageStatePublishSubject
 
+    override val deletingSelectedCatsStateObservable: Observable<DeletingState>
+        get() = deletingSelectedCatsStatePublishSubject
+
     override val refreshObserver: PublishSubject<Unit> = PublishSubject.create()
 
     override val loadNextPageObserver: PublishSubject<Unit> = PublishSubject.create()
@@ -78,6 +88,8 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
         PublishSubject.create()
 
     override val clearSelectedCatsObserver: PublishSubject<Unit> = PublishSubject.create()
+
+    override val deleteSelectedCatsObserver: PublishSubject<Unit> = PublishSubject.create()
 
     init {
         toggleCatSelectionObserver
@@ -162,6 +174,10 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
             .subscribeOn(Schedulers.io())
             .subscribe(loadingNextPageStatePublishSubject)
 
+        deleteSelectedCatsObserver
+            .subscribeOn(Schedulers.io())
+            .subscribe(deletingSelectedCatsStatePublishSubject)
+
         Handler().postDelayed(
             {
                 refreshObserver.onNext(Unit)
@@ -178,5 +194,10 @@ data class RefreshingState(
 
 data class LoadingState(
     val isLoading: Boolean,
+    @StringRes val errorRes: Int?
+)
+
+data class DeletingState(
+    val isDeleting: Boolean,
     @StringRes val errorRes: Int?
 )
