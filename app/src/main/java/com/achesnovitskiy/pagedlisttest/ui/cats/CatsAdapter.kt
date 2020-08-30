@@ -134,14 +134,13 @@ class CatsAdapter(
 
             itemCatIdTextView.text = cat.id
 
-            if (cat.isSelected) {
-                val backgroundColor: Int = ContextCompat.getColor(
-                    itemView.context,
-                    R.color.colorSelectedItemBackground
-                )
-
-                itemView.setBackgroundColor(backgroundColor)
+            val backgroundColor: Int = if (cat.isSelected) {
+                ContextCompat.getColor(itemView.context, R.color.colorSelectedItemBackground)
+            } else {
+                ContextCompat.getColor(itemView.context, R.color.colorItemBackground)
             }
+
+            itemView.setBackgroundColor(backgroundColor)
 
             itemView.setOnLongClickListener {
                 onCatLongClickListener.invoke(cat)
