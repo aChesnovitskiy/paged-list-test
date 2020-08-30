@@ -111,7 +111,13 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                     if (refreshingState.errorRes != null) {
                         catsAdapter.hideLoader()
 
-                        showSnackbar(getString(refreshingState.errorRes))
+                        showSnackbar(
+                            text = getString(refreshingState.errorRes),
+                            duration = Snackbar.LENGTH_INDEFINITE,
+                            action = {
+                                catsViewModel.refreshObserver.onNext(Unit)
+                            }
+                        )
                     } else {
                         dismissSnackbar()
 
@@ -128,10 +134,32 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
 
                     if (loadingState.errorRes != null) {
                         if (catsAdapter.itemCount == 0) {
-                            showSnackbar(getString(loadingState.errorRes))
+                            showSnackbar(
+                                text = getString(loadingState.errorRes),
+                                duration = Snackbar.LENGTH_INDEFINITE,
+                                action = {
+                                    catsViewModel.refreshObserver.onNext(Unit)
+                                }
+                            )
                         } else {
                             catsAdapter.showError()
                         }
+                    } else {
+                        dismissSnackbar()
+                    }
+                },
+
+            catsViewModel.deletingSelectedCatsStateObservable
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { deletingState ->
+                    if (deletingState.errorRes != null) {
+                        showSnackbar(
+                            text = getString(deletingState.errorRes),
+                            duration = Snackbar.LENGTH_LONG,
+                            action = {
+
+                            }
+                        )
                     } else {
                         dismissSnackbar()
                     }
@@ -147,15 +175,20 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
         catsViewModel.loadNextPageObserver.onNext(Unit)
     }
 
-    private fun showSnackbar(text: String) {
+    private fun showSnackbar(
+        text: String,
+        duration: Int,
+        action: () -> Unit
+    ) {
         snackbar = Snackbar.make(
             requireView(),
             text,
-            Snackbar.LENGTH_INDEFINITE
+            duration
         ).apply {
             setAction(getString(R.string.action_repeat)) {
-                catsViewModel.refreshObserver.onNext(Unit)
+                action()
             }
+
             show()
         }
 
@@ -163,7 +196,7 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
     }
 
     private fun dismissSnackbar() {
-        if (isSnackbarInitialized) {
+        if (isSnackbarInitialized && snackbar.isShown) {
             snackbar.dismiss()
 
             isSnackbarInitialized = false

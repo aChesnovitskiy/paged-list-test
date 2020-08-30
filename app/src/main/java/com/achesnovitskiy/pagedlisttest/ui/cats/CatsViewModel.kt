@@ -175,6 +175,31 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
             .subscribe(loadingNextPageStatePublishSubject)
 
         deleteSelectedCatsObserver
+            .switchMap {
+                val selectedCatsCount = 0
+
+                repository.deleteCatCompletable(selectedCats[0].id.toInt())
+                    .andThen(
+                        Observable.just(
+                            DeletingState(
+                                isDeleting = false,
+                                errorRes = null
+                            )
+                        )
+                    )
+                    .startWith(
+                        DeletingState(
+                            isDeleting = true,
+                            errorRes = null
+                        )
+                    )
+                    .onErrorReturnItem(
+                        DeletingState(
+                            isDeleting = false,
+                            errorRes = R.string.msg_deleting_error
+                        )
+                    )
+            }
             .subscribeOn(Schedulers.io())
             .subscribe(deletingSelectedCatsStatePublishSubject)
 
