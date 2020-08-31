@@ -18,6 +18,7 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.functions.Function3
+import io.reactivex.functions.Function4
 import kotlinx.android.synthetic.main.fragment_cats.*
 import javax.inject.Inject
 
@@ -79,17 +80,25 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                     catsViewModel.catsObservable,
                     catsViewModel.selectedCatsObservable,
                     catsViewModel.hasNextPageObservable,
-                    Function3 { cats: List<PresentationCat>, selectedCats: List<PresentationCat>,
-                                hasNextPage: Boolean ->
+                    catsViewModel.deletingSelectedCatsStateObservable,
+                    Function4 { cats: List<PresentationCat>, selectedCats: List<PresentationCat>,
+                                hasNextPage: Boolean, deletingState: DeletingState ->
                         catsDeleteFloatingActionButton.isVisible = selectedCats.isNotEmpty()
 
-                        val resultCats: MutableList<PresentationCat> = cats
-                            .map { cat ->
-                                selectedCats.firstOrNull {
-                                    it.id == cat.id
-                                } ?: cat
-                            }
-                            .toMutableList()
+                        var resultCats: MutableList<PresentationCat> = cats.toMutableList()
+
+                        if (deletingState.isDeleting) {
+                            resultCats.removeAll(selectedCats)
+                        } else {
+                            resultCats = resultCats
+                                .map { cat ->
+                                    selectedCats.firstOrNull {
+                                        it.id == cat.id
+                                    } ?: cat
+                                }
+                                .toMutableList()
+                        }
+
 
                         if (hasNextPage) {
                             resultCats.add(loaderCat)
@@ -157,11 +166,13 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                             text = getString(deletingState.errorRes),
                             duration = Snackbar.LENGTH_LONG,
                             action = {
-
+                                // TODO repeat
                             }
                         )
                     } else {
                         dismissSnackbar()
+
+                        // TODO logic
                     }
                 }
         )

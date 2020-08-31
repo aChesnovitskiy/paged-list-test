@@ -7,11 +7,13 @@ import com.achesnovitskiy.pagedlisttest.R
 import com.achesnovitskiy.pagedlisttest.domain.Repository
 import com.achesnovitskiy.pagedlisttest.extensions.toPresentationCat
 import com.achesnovitskiy.pagedlisttest.ui.entities.PresentationCat
+import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 interface CatsViewModel {
@@ -42,19 +44,24 @@ interface CatsViewModel {
 class CatsViewModelImpl @Inject constructor(private val repository: Repository) : ViewModel(),
     CatsViewModel {
 
-    private val selectedCats: MutableList<PresentationCat> = mutableListOf()
-
-    private val selectedCatsBehaviorSubject: BehaviorSubject<List<PresentationCat>> =
-        BehaviorSubject.createDefault(emptyList())
-
     private val refreshingStatePublishSubject: PublishSubject<RefreshingState> =
         PublishSubject.create()
 
     private val loadingNextPageStatePublishSubject: PublishSubject<LoadingState> =
         PublishSubject.create()
 
-    private val deletingSelectedCatsStatePublishSubject: PublishSubject<DeletingState> =
-        PublishSubject.create()
+    private val selectedCatsBehaviorSubject: BehaviorSubject<List<PresentationCat>> =
+        BehaviorSubject.createDefault(emptyList())
+
+    private val deletingSelectedCatsStatePublishSubject: BehaviorSubject<DeletingState> =
+        BehaviorSubject.createDefault(
+            DeletingState(
+                isDeleting = false,
+                errorRes = null
+            )
+        )
+
+    private val selectedCats: MutableList<PresentationCat> = mutableListOf()
 
     override val catsObservable: Observable<List<PresentationCat>>
         get() = repository.catObservable
@@ -65,9 +72,6 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
             }
             .subscribeOn(Schedulers.io())
 
-    override val selectedCatsObservable: Observable<List<PresentationCat>>
-        get() = selectedCatsBehaviorSubject
-
     override val hasNextPageObservable: Observable<Boolean>
         get() = repository.hasNextPageObservable
 
@@ -76,6 +80,9 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
 
     override val loadingNextPageStateObservable: Observable<LoadingState>
         get() = loadingNextPageStatePublishSubject
+
+    override val selectedCatsObservable: Observable<List<PresentationCat>>
+        get() = selectedCatsBehaviorSubject
 
     override val deletingSelectedCatsStateObservable: Observable<DeletingState>
         get() = deletingSelectedCatsStatePublishSubject
@@ -92,34 +99,6 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
     override val deleteSelectedCatsObserver: PublishSubject<Unit> = PublishSubject.create()
 
     init {
-        toggleCatSelectionObserver
-            .map { cat ->
-                when (cat.isSelected) {
-                    true -> {
-                        if (selectedCats.contains(cat)) {
-                            selectedCats.remove(cat)
-                        }
-                    }
-
-                    false -> selectedCats.add(
-                        cat.copy(isSelected = true)
-                    )
-                }
-
-                selectedCats
-            }
-            .subscribeOn(Schedulers.io())
-            .subscribe(selectedCatsBehaviorSubject)
-
-        clearSelectedCatsObserver
-            .map {
-                selectedCats.clear()
-
-                selectedCats
-            }
-            .subscribeOn(Schedulers.io())
-            .subscribe(selectedCatsBehaviorSubject)
-
         refreshObserver
             .switchMap {
                 repository.refreshCompletable
@@ -174,11 +153,41 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
             .subscribeOn(Schedulers.io())
             .subscribe(loadingNextPageStatePublishSubject)
 
+        toggleCatSelectionObserver
+            .map { cat ->
+                when (cat.isSelected) {
+                    true -> {
+                        if (selectedCats.contains(cat)) {
+                            selectedCats.remove(cat)
+                        }
+                    }
+
+                    false -> selectedCats.add(
+                        cat.copy(isSelected = true)
+                    )
+                }
+
+                selectedCats
+            }
+            .subscribeOn(Schedulers.io())
+            .subscribe(selectedCatsBehaviorSubject)
+
+        clearSelectedCatsObserver
+            .map {
+                selectedCats.clear()
+
+                selectedCats
+            }
+            .subscribeOn(Schedulers.io())
+            .subscribe(selectedCatsBehaviorSubject)
+
         deleteSelectedCatsObserver
             .switchMap {
                 val selectedCatsCount = 0
 
-                repository.deleteCatCompletable(selectedCats[0].id.toInt())
+//                repository.deleteCatCompletable(selectedCats[0].id.toInt())
+                Completable.complete()
+                    .delay(2000L, TimeUnit.MILLISECONDS)
                     .andThen(
                         Observable.just(
                             DeletingState(

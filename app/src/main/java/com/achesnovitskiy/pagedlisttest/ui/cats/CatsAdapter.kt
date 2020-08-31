@@ -61,6 +61,7 @@ class CatsAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
             is CatViewHolder -> holder.bind(cats[position])
+
             is LoaderViewHolder -> onLoaderIsVisibleListener()
         }
     }
@@ -68,27 +69,29 @@ class CatsAdapter(
     override fun getItemViewType(position: Int): Int =
         when {
             cats[position].isLoader -> TYPE_LOADER
+
             cats[position].isError -> TYPE_ERROR
+
             else -> TYPE_CAT
         }
 
-    fun updateCats(data: List<PresentationCat>) {
+    fun updateCats(newCats: List<PresentationCat>) {
         val diffCallback = object : DiffUtil.Callback() {
 
             override fun areItemsTheSame(oldPos: Int, newPos: Int) =
-                cats[oldPos].id == data[newPos].id
+                cats[oldPos].id == newCats[newPos].id
 
             override fun areContentsTheSame(oldPos: Int, newPos: Int) =
-                cats[oldPos] == data[newPos]
+                cats[oldPos] == newCats[newPos]
 
             override fun getOldListSize() = cats.size
 
-            override fun getNewListSize() = data.size
+            override fun getNewListSize() = newCats.size
         }
 
         val diffResult = DiffUtil.calculateDiff(diffCallback)
 
-        cats = data.toMutableList()
+        cats = newCats.toMutableList()
 
         diffResult.dispatchUpdatesTo(this)
     }
