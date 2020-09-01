@@ -57,11 +57,14 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
         BehaviorSubject.createDefault(
             DeletingState(
                 isDeleting = false,
+                isDeleted = false,
                 errorRes = null
             )
         )
 
     private val selectedCats: MutableList<PresentationCat> = mutableListOf()
+
+    private val deletingCats: MutableList<PresentationCat> = mutableListOf()
 
     override val catsObservable: Observable<List<PresentationCat>>
         get() = repository.catObservable
@@ -167,6 +170,10 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
                     )
                 }
 
+                deletingCats.clear()
+
+                deletingCats.addAll(selectedCats)
+
                 selectedCats
             }
             .subscribeOn(Schedulers.io())
@@ -183,31 +190,44 @@ class CatsViewModelImpl @Inject constructor(private val repository: Repository) 
 
         deleteSelectedCatsObserver
             .switchMap {
-                val selectedCatsCount = 0
+                val deletingCatsCount = 0
 
-//                repository.deleteCatCompletable(selectedCats[0].id.toInt())
+                selectedCatsBehaviorSubject.onNext(deletingCats)
+
+//                repository.deleteCatCompletable(deletingCats[0].id.toInt())
                 Completable.complete()
                     .delay(2000L, TimeUnit.MILLISECONDS)
                     .andThen(
                         Observable.just(
+//                            DeletingState(
+//                                isDeleting = false,
+//                                isDeleted = true,
+//                                errorRes = null
+//                            )
                             DeletingState(
                                 isDeleting = false,
-                                errorRes = null
+                                isDeleted = false,
+                                errorRes = R.string.msg_deleting_error
                             )
                         )
                     )
                     .startWith(
                         DeletingState(
                             isDeleting = true,
+                            isDeleted = false,
                             errorRes = null
                         )
                     )
                     .onErrorReturnItem(
                         DeletingState(
                             isDeleting = false,
+                            isDeleted = false,
                             errorRes = R.string.msg_deleting_error
                         )
                     )
+            }
+            .doOnComplete {
+                deletingCats.clear()
             }
             .subscribeOn(Schedulers.io())
             .subscribe(deletingSelectedCatsStatePublishSubject)
@@ -233,5 +253,6 @@ data class LoadingState(
 
 data class DeletingState(
     val isDeleting: Boolean,
+    val isDeleted: Boolean,
     @StringRes val errorRes: Int?
 )

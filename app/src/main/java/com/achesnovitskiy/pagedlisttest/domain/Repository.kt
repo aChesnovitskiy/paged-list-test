@@ -35,9 +35,9 @@ class RepositoryImpl @Inject constructor(
 
     override val catObservable: Observable<List<DomainCat>>
         get() = db.catsDao.getCats()
-            .map { dataCats ->
-                dataCats.map { dataCat ->
-                    dataCat.toDomainCat()
+            .map { cats ->
+                cats.map { cat ->
+                    cat.toDomainCat()
                 }
             }
 

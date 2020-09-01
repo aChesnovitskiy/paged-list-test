@@ -17,7 +17,6 @@ import com.google.android.material.snackbar.Snackbar
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.functions.Function3
 import io.reactivex.functions.Function4
 import kotlinx.android.synthetic.main.fragment_cats.*
 import javax.inject.Inject
@@ -41,6 +40,8 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
     override fun onAttach(context: Context) {
         super.onAttach(context)
 
+
+        requireActivity()
         DaggerCatsComponent
             .builder()
             .appComponent(appComponent)
@@ -88,12 +89,20 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                         var resultCats: MutableList<PresentationCat> = cats.toMutableList()
 
                         if (deletingState.isDeleting) {
-                            resultCats.removeAll(selectedCats)
+                            selectedCats.forEach { selectedCat ->
+                                val index = resultCats.indexOfFirst { cat ->
+                                    selectedCat.id == cat.id
+                                }
+
+                                if (index != -1) {
+                                    resultCats.removeAt(index)
+                                }
+                            }
                         } else {
                             resultCats = resultCats
                                 .map { cat ->
-                                    selectedCats.firstOrNull {
-                                        it.id == cat.id
+                                    selectedCats.firstOrNull { selectedCat ->
+                                        selectedCat.id == cat.id
                                     } ?: cat
                                 }
                                 .toMutableList()
@@ -167,8 +176,11 @@ class CatsFragment : BaseFragment(R.layout.fragment_cats) {
                             duration = Snackbar.LENGTH_LONG,
                             action = {
                                 // TODO repeat
+                                catsViewModel.deleteSelectedCatsObserver.onNext(Unit)
                             }
                         )
+
+                        catsViewModel.clearSelectedCatsObserver.onNext(Unit)
                     } else {
                         dismissSnackbar()
 
